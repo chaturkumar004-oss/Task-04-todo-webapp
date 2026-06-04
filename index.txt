@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium To-Do App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+min-height:100vh;
+background:linear-gradient(-45deg,#0ea5e9,#9333ea,#14b8a6,#2563eb);
+background-size:400% 400%;
+animation:bg 12s ease infinite;
+display:flex;
+justify-content:center;
+padding:30px;
+}
+
+@keyframes bg{
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+}
+
+.container{
+width:100%;
+max-width:900px;
+background:rgba(255,255,255,0.1);
+backdrop-filter:blur(15px);
+border-radius:20px;
+padding:25px;
+color:white;
+box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
+
+h1{
+text-align:center;
+margin-bottom:20px;
+}
+
+.top{
+display:grid;
+grid-template-columns:2fr 1fr 1fr auto;
+gap:10px;
+margin-bottom:15px;
+}
+
+input,button{
+padding:12px;
+border:none;
+border-radius:10px;
+}
+
+button{
+cursor:pointer;
+font-weight:600;
+}
+
+.add-btn{
+background:#22c55e;
+color:white;
+}
+
+.search{
+width:100%;
+margin-bottom:15px;
+}
+
+.filters{
+display:flex;
+gap:10px;
+margin-bottom:15px;
+flex-wrap:wrap;
+}
+
+.filter-btn{
+background:#3b82f6;
+color:white;
+}
+
+.stats{
+margin-bottom:15px;
+font-weight:600;
+}
+
+.task{
+background:rgba(255,255,255,0.1);
+padding:15px;
+border-radius:12px;
+margin-bottom:10px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:10px;
+transition:.3s;
+}
+
+.task:hover{
+transform:translateY(-3px);
+}
+
+.task.completed .task-name{
+text-decoration:line-through;
+opacity:.7;
+}
+
+.task-info{
+flex:1;
+}
+
+.task-name{
+font-size:1rem;
+font-weight:500;
+}
+
+.task-date{
+font-size:.85rem;
+opacity:.8;
+margin-top:5px;
+}
+
+.actions{
+display:flex;
+gap:8px;
+}
+
+.complete{
+background:#22c55e;
+color:white;
+}
+
+.edit{
+background:#f59e0b;
+color:white;
+}
+
+.delete{
+background:#ef4444;
+color:white;
+}
+
+.empty{
+text-align:center;
+padding:30px;
+opacity:.8;
+}
+
+@media(max-width:700px){
+
+.top{
+grid-template-columns:1fr;
+}
+
+.task{
+flex-direction:column;
+align-items:flex-start;
+}
+
+.actions{
+width:100%;
+justify-content:flex-end;
+}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>✅ Premium To-Do App</h1>
+
+<div class="top">
+<input type="text" id="taskInput" placeholder="Enter task">
+<input type="date" id="taskDate">
+<input type="time" id="taskTime">
+<button class="add-btn" onclick="addTask()">Add Task</button>
+</div>
+
+<input
+class="search"
+type="text"
+id="search"
+placeholder="Search tasks..."
+onkeyup="renderTasks()"
+>
+
+<div class="filters">
+<button class="filter-btn" onclick="setFilter('all')">All</button>
+<button class="filter-btn" onclick="setFilter('pending')">Pending</button>
+<button class="filter-btn" onclick="setFilter('completed')">Completed</button>
+</div>
+
+<div class="stats">
+Total Tasks: <span id="total">0</span> |
+Completed: <span id="completed">0</span>
+</div>
+
+<div id="taskList"></div>
+
+</div>
+
+<script>
+
+let tasks =
+JSON.parse(localStorage.getItem("tasks")) || [];
+
+let filter = "all";
+
+function saveTasks(){
+localStorage.setItem(
+"tasks",
+JSON.stringify(tasks)
+);
+}
+
+function addTask(){
+
+const input =
+document.getElementById("taskInput");
+
+const date =
+document.getElementById("taskDate");
+
+const time =
+document.getElementById("taskTime");
+
+if(input.value.trim()===""){
+alert("Please enter a task");
+return;
+}
+
+tasks.push({
+id:Date.now(),
+name:input.value,
+date:date.value,
+time:time.value,
+completed:false
+});
+
+input.value="";
+date.value="";
+time.value="";
+
+saveTasks();
+renderTasks();
+}
+
+function deleteTask(id){
+
+tasks = tasks.filter(
+task=>task.id!==id
+);
+
+saveTasks();
+renderTasks();
+}
+
+function toggleTask(id){
+
+tasks = tasks.map(task=>{
+
+if(task.id===id){
+task.completed=!task.completed;
+}
+
+return task;
+});
+
+saveTasks();
+renderTasks();
+}
+
+function editTask(id){
+
+let task =
+tasks.find(t=>t.id===id);
+
+let newName =
+prompt("Edit task",task.name);
+
+if(newName===null) return;
+
+task.name = newName;
+
+saveTasks();
+renderTasks();
+}
+
+function setFilter(value){
+filter=value;
+renderTasks();
+}
+
+function renderTasks(){
+
+const list =
+document.getElementById("taskList");
+
+const search =
+document.getElementById("search")
+.value
+.toLowerCase();
+
+let filtered =
+tasks.filter(task =>
+task.name.toLowerCase()
+.includes(search)
+);
+
+if(filter==="completed"){
+filtered =
+filtered.filter(t=>t.completed);
+}
+
+if(filter==="pending"){
+filtered =
+filtered.filter(t=>!t.completed);
+}
+
+document.getElementById("total")
+.textContent = tasks.length;
+
+document.getElementById("completed")
+.textContent =
+tasks.filter(t=>t.completed).length;
+
+if(filtered.length===0){
+
+list.innerHTML=`
+<div class="empty">
+📋 No tasks found
+</div>
+`;
+
+return;
+}
+
+list.innerHTML = filtered.map(task=>`
+
+<div class="task ${task.completed ? "completed" : ""}">
+
+<div class="task-info">
+
+<div class="task-name">
+${task.name}
+</div>
+
+<div class="task-date">
+📅 ${task.date || "No Date"}
+⏰ ${task.time || "No Time"}
+</div>
+
+</div>
+
+<div class="actions">
+
+<button
+class="complete"
+onclick="toggleTask(${task.id})">
+✓
+</button>
+
+<button
+class="edit"
+onclick="editTask(${task.id})">
+✏
+</button>
+
+<button
+class="delete"
+onclick="deleteTask(${task.id})">
+🗑
+</button>
+
+</div>
+
+</div>
+
+`).join("");
+}
+
+renderTasks();
+
+</script>
+
+</body>
+</html>
